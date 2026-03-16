@@ -49,7 +49,7 @@ export type FileMetadata = {
   'Capture Date'?: string;
   'Location'?: string;
   'Description'?: string;
-  type: 'image' | 'video' | 'document';
+  type: 'image' | 'video' | 'document' | 'audio';
   path: string;
   // optional same-origin proxy URL (served by /api/storage) to avoid CORP/ORB issues
   proxyPath?: string;
@@ -57,14 +57,14 @@ export type FileMetadata = {
   mtimeMs?: number;
 };
 
-async function getFileMetadata(filePath: string, fileName: string, type: 'images' | 'videos' | 'documents'): Promise<FileMetadata> {
+async function getFileMetadata(filePath: string, fileName: string, type: 'images' | 'videos' | 'documents' | 'audios'): Promise<FileMetadata> {
   const stats = await stat(filePath);
   const metadata: FileMetadata = {
     'File Name': fileName,
     storedName: fileName,
     'File Size': `${(stats.size / 1024 / 1024).toFixed(2)} MB`,
     'Last Modified': stats.mtime.toLocaleDateString(),
-    type: type.slice(0, -1) as 'image' | 'video' | 'document',
+    type: type.slice(0, -1) as 'image' | 'video' | 'document' | 'audio',
     path: `/uploads/${type}/${fileName}`,
     proxyPath: `/api/storage?file=${encodeURIComponent(`${type}/${fileName}`)}`,
     mtimeMs: stats.mtime.getTime(),
@@ -150,7 +150,7 @@ async function getFileMetadata(filePath: string, fileName: string, type: 'images
 }
 
 
-export async function getFiles(type: 'images' | 'videos' | 'documents'): Promise<FileMetadata[]> {
+export async function getFiles(type: 'images' | 'videos' | 'documents' | 'audios'): Promise<FileMetadata[]> {
   if (process.env.USE_SUPABASE === 'true') {
     try {
       const bucket = process.env.SUPABASE_BUCKET!;

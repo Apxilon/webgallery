@@ -96,19 +96,22 @@ export function DocumentViewer({ file, children }: DocumentViewerProps) {
     }
 
     async function fetchAsBlob() {
+      const proxyUrl = proxySrc;
+      if (!proxyUrl) return;
+
       setPdfError(null);
       setPdfLoading(true);
       try {
-        const res = await fetch(proxySrc, { cache: 'no-store' });
+        const res = await fetch(proxyUrl, { cache: 'no-store' });
         if (!res.ok) throw new Error(`proxy fetch failed (${res.status})`);
         const blob = await res.blob();
         if (cancelled) return;
-        const url = URL.createObjectURL(blob);
+        const blobUrl = URL.createObjectURL(blob);
         // revoke previous if present
         if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
-        setPdfBlobUrl(url);
+        setPdfBlobUrl(blobUrl);
         // eslint-disable-next-line no-console
-        console.debug('[DocumentViewer] pdfBlobUrl created ->', url);
+        console.debug('[DocumentViewer] pdfBlobUrl created ->', blobUrl);
       } catch (err: any) {
         console.error('[DocumentViewer] blob proxy fetch error:', err);
         setPdfError(err?.message || 'Failed to fetch PDF for in-app preview');

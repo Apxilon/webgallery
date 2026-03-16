@@ -1,7 +1,6 @@
 'use client';
 
-import { useFormStatus } from 'react-dom';
-import { useActionState, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { login } from '@/app/actions';
 import {
   Card,
@@ -19,8 +18,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ pending }: { pending: boolean }) {
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending ? 'Signing In...' : 'Sign In'}
@@ -30,24 +28,37 @@ function SubmitButton() {
 }
 
 export function LoginForm() {
-  const [state, formAction] = useActionState(login, undefined);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (state?.success) {
-      toast({
-        title: 'Success!',
-        description: state.message,
-      });
-      localStorage.setItem('is_admin', 'true');
-      router.push('/uploads');
-    }
-  }, [state, router, toast]);
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const result = await login(formData);
+      if (result?.success) {
+        toast({
+          title: 'Success!',
+          description: result.message,
+        });
+        // Store admin token locally so we can authorize uploads/deletes
+        if (result.token) {
+          localStorage.setItem('admin_token', result.token);
+        }
+        localStorage.setItem('is_admin', 'true');
+        router.push('/uploads');
+      } else {
+        setError(result?.message ?? 'Sign in failed.');
+      }
+    });
+  };
 
   return (
     <Card className="w-full max-w-sm">
-      <form action={formAction}>
+      <form onSubmit={handleSubmit}>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">Static Gallery</CardTitle>
           <CardDescription>Enter your credentials to access the gallery.</CardDescription>
@@ -73,16 +84,16 @@ export function LoginForm() {
               required
             />
           </div>
-          {state?.message && !state.success && (
-             <Alert variant="destructive" className="mt-4">
-               <AlertDescription>{state.message}</AlertDescription>
-             </Alert>
-           )}
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
         <CardFooter className="flex items-center gap-3">
           <Button variant="ghost" onClick={() => router.push('/')}>Home</Button>
           <div className="flex-1 flex justify-end">
-            <SubmitButton />
+            <SubmitButton pending={isPending} />
           </div>
         </CardFooter>
       </form>

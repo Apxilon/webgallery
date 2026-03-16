@@ -1,5 +1,5 @@
 import { getFiles } from '@/lib/files';
-import { GalleryClient } from '@/components/gallery-client';
+import { AuthenticatedUploadPage } from '@/components/authenticated-upload-page';
 
 export default async function UploadsPage() {
   const photos = await getFiles('images');
@@ -8,14 +8,11 @@ export default async function UploadsPage() {
   const audios = await getFiles('audios');
 
   return (
-    <div className="min-h-screen bg-background">
-      <GalleryClient
-        photos={photos}
-        videos={videos}
-        documents={documents}
-        audios={audios}
-        isAdmin={true}
-      />
-    </div>
+    <AuthenticatedUploadPage
+      photos={photos}
+      videos={videos}
+      documents={documents}
+      audios={audios}
+    />
   );
 }

@@ -91,9 +91,12 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       formData.append('type', type);
       formData.append('description', description);
 
+      // Attach admin token for server-side authorization
+      const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+
       let result: { success: boolean; message?: string } = { success: false, message: 'Unknown error' };
       try {
-        result = await serverUploadFile(null, formData);
+        result = await serverUploadFile(null, formData, token ?? undefined);
       } catch (err: any) {
         console.error('serverUploadFile threw:', err);
         const msg = String(err?.message || 'Upload failed');

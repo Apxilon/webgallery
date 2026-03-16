@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { GalleryHeader } from './gallery-header';
 // react-image-gallery (viewer replacement)
@@ -13,6 +13,7 @@ import { Badge } from './ui/badge';
 import { Link as LinkIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { logout } from '@/app/actions';
 import type { FileMetadata } from '@/lib/files';
 import { Info, X, GripHorizontal, Play, Pause, Volume2, VolumeX, Download } from 'lucide-react';
 
@@ -371,11 +372,18 @@ export function GalleryClient({ photos, videos, documents, audios, isAdmin }: Ga
   };
 
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleLogout = () => {
-    // clear client-side admin flag and navigate to login
-    try { localStorage.removeItem('is_admin'); } catch (e) { /* ignore */ }
-    router.replace('/login');
+    // clear client-side admin flag
+    try {
+      localStorage.removeItem('is_admin');
+      localStorage.removeItem('admin_token');
+    } catch (e) {
+      /* ignore */
+    }
+
+    router.replace('/');
   };
 
   // Filter files based on search query

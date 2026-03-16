@@ -10,8 +10,8 @@ export default function SecureLoginPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const isAdmin = localStorage.getItem('is_admin') === 'true';
-    if (isAdmin) {
+    const token = localStorage.getItem('admin_token');
+    if (token) {
       router.replace('/uploads');
     } else {
       setIsLoading(false);

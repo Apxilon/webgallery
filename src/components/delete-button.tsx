@@ -28,7 +28,8 @@ export function DeleteButton({ fileName, type }: DeleteButtonProps) {
 
   const handleDelete = async () => {
     startTransition(async () => {
-      const result = await deleteFile(fileName, type);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+      const result = await deleteFile(fileName, type, token ?? undefined);
       toast({
         title: result.success ? 'Success' : 'Error',
         description: result.message,

@@ -12,7 +12,9 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-export async function login(prevState: any, formData: FormData) {
+const ADMIN_TOKEN = Buffer.from(`${ADMIN_USER.username}:${ADMIN_USER.password}`).toString('base64');
+
+export async function login(formData: FormData, prevState?: any) {
   try {
     const parsed = loginSchema.parse(Object.fromEntries(formData));
 
@@ -20,7 +22,11 @@ export async function login(prevState: any, formData: FormData) {
       parsed.username === ADMIN_USER.username &&
       parsed.password === ADMIN_USER.password
     ) {
-      return { success: true, message: 'Login successful!' };
+      return {
+        success: true,
+        message: 'Login successful!',
+        token: ADMIN_TOKEN,
+      };
     } else {
       return { success: false, message: 'Invalid username or password' };
     }
@@ -29,7 +35,16 @@ export async function login(prevState: any, formData: FormData) {
   }
 }
 
-export async function uploadFile(prevState: any, formData: FormData) {
+export async function logout() {
+  return { success: true, message: 'Logged out.' };
+}
+
+export async function uploadFile(prevState: any, formData: FormData, token?: string) {
+  // Basic auth guard: validate that client included a known admin token
+  if (token !== ADMIN_TOKEN) {
+    return { success: false, message: 'Unauthorized. Please sign in to upload files.' };
+  }
+
   const files = formData.getAll('file') as File[];
   const file = files && files.length > 0 ? (files[0] as File) : (formData.get('file') as File);
   const type = formData.get('type') as 'images' | 'videos' | 'documents' | 'audios';
@@ -274,7 +289,12 @@ export async function uploadFile(prevState: any, formData: FormData) {
   }
 }
 
-export async function deleteFile(fileName: string, type: string) {
+export async function deleteFile(fileName: string, type: string, token?: string) {
+  // Basic auth guard: validate that client included a known admin token
+  if (token !== ADMIN_TOKEN) {
+    return { success: false, message: 'Unauthorized. Please sign in to delete files.' };
+  }
+
   if (!fileName || !type) {
     return { success: false, message: 'Invalid file information.' };
   }
